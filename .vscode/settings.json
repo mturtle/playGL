@@ -1,0 +1,10 @@
+{
+    "makefile.makePath": "mingw32-make",
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "c:\\Projects\\glPlay\\build",
+            "binaryPath": "c:\\Projects\\glPlay\\build\\glPlay",
+            "binaryArgs": []
+        }
+    ]
+}
