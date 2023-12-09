@@ -2,7 +2,7 @@ SHELL=C:/Program\ Files/Git/bash.exe
 CC=g++
 BINARY=glPlay
 SRC_DIR=. ./src ./dependencies ./dependencies/GLAD/src
-INCLUDE_DIR=-I. -I./dependencies/GLAD/include -I./dependencies/GLFW/include
+INCLUDE_DIR=-I. -I./dependencies/GLAD/include -I./dependencies/GLFW/include -I./dependencies/glm
 LIBRARY_DIR=-L./dependencies/GLFW/lib-mingw-w64
 LINK_FLAGS=-lglfw3 -lGdi32 -lopengl32
 BUILD_DIR=./build
@@ -19,7 +19,7 @@ $(BINARY): $(OBJ_FILES)
 	$(CC) -o $(BUILD_DIR)/$@ $^ $(LIBRARY_DIR) $(LINK_FLAGS)
 
 %.o: %.cpp
-	$(CC) $(DEP_FLAGS) $(INCLUDE_DIR) -c $^ -o $@
+	$(CC) $(DEP_FLAGS) $(INCLUDE_DIR) -g -c $^ -o $@
 
 .PHONY: clean
 clean:

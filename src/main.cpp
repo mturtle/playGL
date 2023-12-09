@@ -1,7 +1,12 @@
 #define GLFW_INCLUDE_NONE
 #include <GLAD/glad.h>
 #include <GLFW/glfw3.h>
+#include <dependencies/glm/vec3.hpp>
+
+#include "shader.h"
+
 #include <iostream>
+#include <cmath>
 
 static void error_callback(int error, const char* desc)
 {
@@ -18,27 +23,31 @@ static void keypress_callback(GLFWwindow* window, int key, int scancode, int act
 
 static void framesize_callback(GLFWwindow* window, int width, int height)
 {
-    //std::cout << "Resizing: " << width << " " << height << std::endl;
+    std::cout << "Resizing: " << width << " " << height << std::endl;
     glViewport(0, 0, width, height);
 }
 
-static const char* vertex_shader_source = {
-    "#version 330 core\n"
-    "layout(location = 0) in vec3 aPos;\n"
-    "void main()\n"
-    "{\n"
-    "gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);\n"
-    "}\0"
-};
+static void update_framerate(GLFWwindow* window)
+{
+    static double previous_seconds = glfwGetTime();
+    static int frame_count;
+    double current_seconds = glfwGetTime();
+    double elapsed_seconds = current_seconds - previous_seconds;
 
-static const char* frag_shader_source = {
-    "#version 330 core\n"
-    "layout(location = 0) out vec4 fragColor;\n"
-    "void main()\n"
-    "{\n"
-    "fragColor = vec4(1.0, 0.0, 0.0, 1.0);\n"
-    "}\0"
-};
+    if (elapsed_seconds > 0.25)
+    {
+        previous_seconds = current_seconds;
+        double fps = (double)frame_count / elapsed_seconds;
+        char tmp[128];
+        sprintf(tmp, "fps: %.2f", fps);
+        glfwSetWindowTitle(window, tmp);
+        frame_count = 0;
+    }
+
+    frame_count++;
+}
+
+// -------------------------------------------------------------------
 
 int main(void)
 {
@@ -51,6 +60,7 @@ int main(void)
     glfwSetErrorCallback(error_callback);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    //glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     /* Create a windowed mode window and its OpenGL context */
@@ -74,55 +84,20 @@ int main(void)
 
     glViewport(0, 0, 1200, 1024);
 
-    // shader setup stuff...
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertex_shader_source, NULL);
-    glCompileShader(vertexShader);
+    //const int shaderProgram = CreateShaderProgram(vertex_shader_source, frag_shader_source);
+    Shader basicShader(std::string("res/shaders/basic.vert"), std::string("res/shaders/basic.frag"));
 
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-
-    if (!success)
+    if (!basicShader.renderID)
     {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "Vertex shader compilation error: \n" << infoLog << std::endl;
+        std::cout << "Missing shader program, exiting...";
     }
 
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &frag_shader_source, NULL);
-    glCompileShader(fragmentShader);
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-
-    if (!success)
+    //vertex buffer stuff
+    float triangle_verts[15] =
     {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cout << "Fragment shader compilation error: \n" << infoLog << std::endl;
-    }
-
-    unsigned int shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "Error linking shader program: \n" << infoLog << std::endl;
-    }
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-    glUseProgram(shaderProgram);
-
-    // vertex buffer stuff
-    float triangle_verts[] =
-    {
-        -0.5f, -0.5f,
-        0.0f, 0.5f,
-        0.5f, -0.5f
+        -0.6f, -0.4f, 1.0f, 0.0f, 0.0f,
+         0.6f, -0.4f, 0.0f, 1.0f, 0.0f,
+         0.0f,  0.5f, 1.0f, 1.0f, 1.0f,
     };
 
     unsigned int VBO, VAO;
@@ -134,8 +109,15 @@ int main(void)
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_verts), triangle_verts, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
+    // describe vertex position attribute
+    GLint vPosLocation = glGetAttribLocation(basicShader.renderID, "vPos");
+    glEnableVertexAttribArray(vPosLocation);
+    glVertexAttribPointer(vPosLocation, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)0);
+
+    // describe vertex color attribute
+    GLint vColLocation = glGetAttribLocation(basicShader.renderID, "vCol");
+    glEnableVertexAttribArray(vColLocation);
+    glVertexAttribPointer(vColLocation, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)(sizeof(float) * 2));
 
     // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
@@ -147,10 +129,17 @@ int main(void)
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
+        update_framerate(window);
+
         glClearColor(0.2f, 0.2f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(shaderProgram);
+        const float xFreq = 1.0f;
+        const float yFreq = 0.5f;
+        const glm::vec3 prim_pos (sin(glfwGetTime() * xFreq), sin(glfwGetTime() * yFreq), 0.0f); 
+        glUniform3f(glGetUniformLocation(basicShader.renderID, "prim_pos"), prim_pos.x, prim_pos.y, prim_pos.z);
+
+        basicShader.Bind();
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
