@@ -1,9 +1,10 @@
 #version 330 core
 
-varying vec3 color;
-uniform vec4 overColor;
+in vec3 color;
+uniform vec3 overColor;
 
 void main()
 {
-    gl_FragColor = vec4(color, 1.0);
+    vec3 blendColor = mix(color, overColor, 0.5);
+    gl_FragColor = vec4(blendColor, 1.0);
 }

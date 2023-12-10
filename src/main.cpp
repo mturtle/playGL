@@ -137,9 +137,10 @@ int main(void)
         const float xFreq = 1.0f;
         const float yFreq = 0.5f;
         const glm::vec3 prim_pos (sin(glfwGetTime() * xFreq), sin(glfwGetTime() * yFreq), 0.0f); 
-        glUniform3f(glGetUniformLocation(basicShader.renderID, "prim_pos"), prim_pos.x, prim_pos.y, prim_pos.z);
 
         basicShader.Bind();
+        basicShader.SetUniformFloat3("prim_pos", prim_pos);
+        basicShader.SetUniformFloat3("overColor", glm::vec3(1.0, 0.0, 0.0));
         
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);

@@ -1,9 +1,9 @@
 #version 330 core
 
-attribute vec2 vPos;
-attribute vec3 vCol;
+in vec2 vPos;
+in vec3 vCol;
 uniform vec3 prim_pos;
-varying vec3 color;
+out vec3 color;
 
 void main()
 {

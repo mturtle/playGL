@@ -2,6 +2,7 @@
 
 #include <GLAD/glad.h>
 #include <GLFW/glfw3.h>
+#include <dependencies/glm/vec3.hpp>
 
 #include <iostream>
 
@@ -10,7 +11,7 @@ enum ShaderType {
     FRAGMENT_SHADER = GL_FRAGMENT_SHADER 
 };
 
-static const char* vertex_shader_source = {
+static const char* sample_vert_shader_source = {
     "#version 330 core\n"
     "attribute vec2 vPos;\n"
     "attribute vec3 vCol;\n"
@@ -24,7 +25,7 @@ static const char* vertex_shader_source = {
     "}"
 };
 
-static const char* frag_shader_source = {
+static const char* sample_frag_shader_source = {
     "#version 330 core\n"
     "varying vec3 color;\n"
     "uniform vec4 overColor;\n"
@@ -34,58 +35,10 @@ static const char* frag_shader_source = {
     "}"
 };
 
-static int CreateShader(ShaderType Type, const char* ShaderSource)
+namespace ShaderHelpers
 {
-    const unsigned int Shader = glCreateShader(Type);
-    glShaderSource(Shader, 1, &ShaderSource, NULL);
-    glCompileShader(Shader);
-
-    int Success, LogLength;
-    glGetShaderiv(Shader, GL_COMPILE_STATUS, &Success);
-    if (!Success)
-    {
-        char Log[512];
-        glGetShaderInfoLog(Shader, 512, &LogLength, Log);
-        std::cout << "Error compiling " << Type << " shader: " << Log << std::endl;
-        return 0;
-    }
-
-    return Shader;
-}
-
-static int CreateShaderProgram(const char* VertexShaderSource, const char* FragmentShaderSource)
-{
-    const int ShaderProgram = glCreateProgram();
-    
-    //std::cout << "Creating shader program with vert: \n" << VertexShaderSource << std::endl;
-    //std::cout << "Creating shader program with frag: \n" << FragmentShaderSource << std::endl;
-
-    int VertexShader = CreateShader(VERTEX_SHADER, VertexShaderSource);
-    int FragmentShader = CreateShader(FRAGMENT_SHADER, FragmentShaderSource);
-
-    if (!VertexShader || !FragmentShader)
-    {
-        return 0;
-    }
-
-    glAttachShader(ShaderProgram, VertexShader);
-    glAttachShader(ShaderProgram, FragmentShader);
-    glLinkProgram(ShaderProgram);
-
-    int Success, LogLength;
-    char Log[512];
-    glGetProgramiv(ShaderProgram, GL_LINK_STATUS, &Success);
-    if (!Success)
-    {
-        glGetProgramInfoLog(ShaderProgram, 512, NULL, Log);
-        std::cout << "Error linking shader program: \n" << Log << std::endl;
-        return 0;
-    }
-
-    glDeleteShader(VertexShader);
-    glDeleteShader(FragmentShader);
-
-    return ShaderProgram;
+    static int CreateShader(ShaderType Type, const char* ShaderSource);
+    static int CreateShaderProgram(const char* VertexShaderSource, const char* FragmentShaderSource);
 }
 
 class Shader
@@ -98,4 +51,5 @@ class Shader
 
     void Bind();
     void Unbind();
+    void SetUniformFloat3(const std::string& name, const glm::vec3 value);
 };
