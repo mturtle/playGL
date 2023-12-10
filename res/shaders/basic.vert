@@ -1,4 +1,4 @@
- #version 330 core
+#version 330 core
 
 attribute vec2 vPos;
 attribute vec3 vCol;

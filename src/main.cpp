@@ -140,6 +140,7 @@ int main(void)
         glUniform3f(glGetUniformLocation(basicShader.renderID, "prim_pos"), prim_pos.x, prim_pos.y, prim_pos.z);
 
         basicShader.Bind();
+        
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
